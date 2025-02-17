@@ -7,12 +7,23 @@ import { HydratedDocument } from 'mongoose';
 
 import User, { IUser, UserRole } from "../models/User";
 import { errorResponse, successResponse, validationErrorResponse } from "../utils/Messages";
-
+const jwtSecret: string = process.env.JWT_SECRET as string;
 interface JwtPayload {
     userId: string;
     name: string;
     email: string;
 }
+
+const options: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: "strict" | "lax" | "none";
+} = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
+
 
 class UserController {
     public async createUser(req: Request, res: Response): Promise<void> {
@@ -62,17 +73,15 @@ class UserController {
                  res.status(404).json(validationErrorResponse("email", "User not found, please register"));
             }
 
-           
             const tokenPayload = {
                 user: (user as IUser)
             };
-
-            const token = jwt.sign(
-                tokenPayload,
-                process.env.JWT_SECRET || "defaultSecretKey",
-                { expiresIn: '1h' }
-            );
-            
+            const token = jwt.sign(tokenPayload, jwtSecret, { expiresIn: '5h' });
+             res.cookie(
+                "token",
+                token,
+                options
+            ).status(201).json({})
              res.cookie('auth_token', 'yourAuthTokenHere', {
         httpOnly: true, 
         secure: process.env.NODE_ENV === 'production', 
