@@ -2,16 +2,16 @@ import { Schema, model, } from 'mongoose';
 
 import mongoose from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI as string;
+const MONGO_URI = process.env.MONGO_URL as string;
 
 
-const MONGOURI: string ="mongodb+srv://kawsar:kawsar@cluster0.qbufs.mongodb.net/"
+
 
 class Database {
     private mongouri:string;    
 
     constructor(){
-        this.mongouri = MONGOURI;
+        this.mongouri = MONGO_URI;
     }
     public async connect():Promise<void>{
         try{
