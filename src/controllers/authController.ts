@@ -56,17 +56,27 @@ class UserController {
         try {
             const { email } = req.body;
             const user: HydratedDocument<IUser> | null = await User.findOne({ email });
+          
             if (!email) { res.status(400).json(validationErrorResponse("email", "User Not found please Register"));}  
+            if (!user || !user._id) {
+                 res.status(404).json(validationErrorResponse("email", "User not found, please register"));
+            }
+
+           
+            const tokenPayload = {
+                user: (user as IUser)
+            };
+
             const token = jwt.sign(
-                { userId: user._id.toString(), name: user.name, email: user.email }, 
-                "secretkey",
-                { expiresIn: '1h' } 
+                tokenPayload,
+                process.env.JWT_SECRET || "defaultSecretKey",
+                { expiresIn: '1h' }
             );
             
              res.cookie('auth_token', 'yourAuthTokenHere', {
-        httpOnly: true, // Prevents client-side access to cookie
-        secure: process.env.NODE_ENV === 'production', // Ensures cookie is sent over HTTPS in production
-        maxAge: 24 * 60 * 60 * 1000, // Cookie expiry time (1 day)
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production', 
+        maxAge: 24 * 60 * 60 * 1000,
     });      
             res.status(200).json(successResponse(200, "User Login succefully", user));
 
