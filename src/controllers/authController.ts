@@ -2,27 +2,16 @@
 
 import { Request, response, Response } from "express";
 import bcrypt from 'bcryptjs';
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { HydratedDocument } from 'mongoose';
 
 import User, { IUser, UserRole } from "../models/User";
 import { errorResponse, successResponse, validationErrorResponse } from "../utils/Messages";
-const jwtSecret: string = process.env.JWT_SECRET as string;
-interface JwtPayload {
-    userId: string;
-    name: string;
-    email: string;
-}
+const jwtSecret: string = process.env.JWT_SECRET as string || "kawsarfiroz";
 
-const options: {
-    httpOnly: boolean;
-    secure: boolean;
-    sameSite: "strict" | "lax" | "none";
-} = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-};
+
+
+
 
 
 class UserController {
@@ -49,7 +38,7 @@ class UserController {
                 {
                     ...req.body,
                     role: UserRole.TRAINEE,
-                    password: hashedPassword,
+                    // password: hashedPassword,
                 }
             )
             const user = await userInfo.save();
@@ -63,36 +52,41 @@ class UserController {
         }
     }
 
+
+    // Login functionality
     public async LoginUser(req: Request, res: Response): Promise<void> {
         try {
             const { email } = req.body;
+            if (!email) {
+                 res.status(400).json(validationErrorResponse("email", "User Not found please Register"));
+                return
+                }  
             const user: HydratedDocument<IUser> | null = await User.findOne({ email });
-          
-            if (!email) { res.status(400).json(validationErrorResponse("email", "User Not found please Register"));}  
             if (!user || !user._id) {
-                 res.status(404).json(validationErrorResponse("email", "User not found, please register"));
+                res.status(404).json(validationErrorResponse("user", "User not found, please register"));
+            return
             }
-
-            const tokenPayload = {
-                user: (user as IUser)
+            const jwtOptions: SignOptions = {
+                expiresIn: "1h",
             };
-            const token = jwt.sign(tokenPayload, jwtSecret, { expiresIn: '5h' });
-             res.cookie(
-                "token",
-                token,
-                options
-            ).status(201).json({})
-             res.cookie('auth_token', 'yourAuthTokenHere', {
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production', 
-        maxAge: 24 * 60 * 60 * 1000,
-    });      
-            res.status(200).json(successResponse(200, "User Login succefully", user));
+            const userInfo = {
+                ...user
+            } 
+            const token: string = jwt.sign(userInfo, jwtSecret, jwtOptions);
+            res.cookie("token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+            });
+
+            res.status(200).json(successResponse(200, "User Login succefully", {user, token}));
 
         } catch (err) {
+            console.log(err)
             res.status(500).json(errorResponse(500, "Internal Server Error", err));
         }
     }
+    
 }
 
 
