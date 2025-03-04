@@ -12,7 +12,7 @@ enum ClassStatus {
 interface IClassSchedule extends Document {
     date: Date;
     timeSlot: string;
-    trainerId: Types.ObjectId; // Reference to Trainer model
+    trainerId: Types.ObjectId; 
     availableSlots: number;
     classDuration: number;
     trainees: Types.ObjectId[]; 

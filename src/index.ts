@@ -29,8 +29,6 @@ app.use("/api/user", userRoute);
 // database 
 db.connect();
 
-
-
 // server run port
 app.listen(port, () => {
     console.log("app listening  ." ,port);

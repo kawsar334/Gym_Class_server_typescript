@@ -21,7 +21,6 @@ const userSchema: Schema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true},
- 
   avatar: String,
   role: { type: String, enum: UserRole, default: UserRole.TRAINEE },
   // createdAt: { type: Date, default: Date.now },
